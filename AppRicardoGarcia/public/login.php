@@ -1,4 +1,5 @@
 <?php
+require_once "config/database.php";
 $host = "localhost";
 $usuarioBD = "root";
 $passwordBD = ""; // cámbialo si tu MySQL tiene contraseña
