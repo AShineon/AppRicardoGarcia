@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Proveedor` (
   `email` VARCHAR(45) NOT NULL,
   `direccion` VARCHAR(100) NOT NULL,
   `ruc` VARCHAR(30) NULL,
-  PRIMARY KEY (`proveedor_id`, `nombre`),
-  UNIQUE INDEX `ruc_UNIQUE` (`ruc` ASC) VISIBLE)
+  PRIMARY KEY (`proveedor_id`),
+  UNIQUE INDEX `ruc_UNIQUE` (`ruc` ASC))
 ENGINE = InnoDB;
 
 
@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Producto` (
   `categoria_id` INT NULL,
   `proveedor_id` INT NOT NULL,
   PRIMARY KEY (`producto_id`),
-  INDEX `fk_producto_categoria_idx` (`categoria_id` ASC) VISIBLE,
-  INDEX `fk_producto_proveedor_idx` (`proveedor_id` ASC) VISIBLE,
+  INDEX `fk_producto_categoria_idx` (`categoria_id` ASC),
+  INDEX `fk_producto_proveedor_idx` (`proveedor_id` ASC),
   CONSTRAINT `fk_producto_categoria`
     FOREIGN KEY (`categoria_id`)
     REFERENCES `mydb`.`Categoria` (`categoria_id`)
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Oferta` (
   `fecha_fin` DATETIME NOT NULL,
   `activa` TINYINT NOT NULL,
   PRIMARY KEY (`oferta_id`),
-  INDEX `fk_oferta_producto_idx` (`producto_id` ASC) VISIBLE,
+  INDEX `fk_oferta_producto_idx` (`producto_id` ASC),
   CONSTRAINT `fk_oferta_producto`
     FOREIGN KEY (`producto_id`)
     REFERENCES `mydb`.`Producto` (`producto_id`)
@@ -116,8 +116,8 @@ CREATE TABLE IF NOT EXISTS `mydb`.`VarianteProducto` (
   `cantidad_stock` INT NOT NULL DEFAULT 0,
   `sku` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`variante_id`),
-  INDEX `fk_variannteProducto_idx` (`producto_id` ASC) VISIBLE,
-  UNIQUE INDEX `sku_UNIQUE` (`sku` ASC) VISIBLE,
+  INDEX `fk_variannteProducto_idx` (`producto_id` ASC),
+  UNIQUE INDEX `sku_UNIQUE` (`sku` ASC),
   CONSTRAINT `fk_variannteProducto`
     FOREIGN KEY (`producto_id`)
     REFERENCES `mydb`.`Producto` (`producto_id`)
@@ -156,8 +156,8 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Venta` (
   `metodo_pago` ENUM('EFECTIVO', 'TARJETA_CREDITO', 'TARJETA_DEBITO', 'TRANSFERENCIA', 'OTRO') NULL,
   `estado` ENUM('COMPLETADA', 'CANCELADA', 'DEVOLUCION', 'PENDIENTE') NULL,
   PRIMARY KEY (`venta_id`),
-  INDEX `fk_venta_cliente_idx` (`cliente_id` ASC) VISIBLE,
-  INDEX `fk_venta_empleado_idx` (`empleado_id` ASC) VISIBLE,
+  INDEX `fk_venta_cliente_idx` (`cliente_id` ASC),
+  INDEX `fk_venta_empleado_idx` (`empleado_id` ASC),
   CONSTRAINT `fk_venta_cliente`
     FOREIGN KEY (`cliente_id`)
     REFERENCES `mydb`.`Cliente` (`cliente_id`)
@@ -183,8 +183,8 @@ CREATE TABLE IF NOT EXISTS `mydb`.`DetalleVenta` (
   `descuento_unitario` DECIMAL(10,2) NULL DEFAULT 0.00,
   `total_linea` DECIMAL(10,2) NOT NULL,
   PRIMARY KEY (`detalle_id`),
-  INDEX `fk_detalle_venta_idx` (`venta_id` ASC) VISIBLE,
-  INDEX `fk_detalle_variante_idx` (`variante_id` ASC) VISIBLE,
+  INDEX `fk_detalle_venta_idx` (`venta_id` ASC),
+  INDEX `fk_detalle_variante_idx` (`variante_id` ASC),
   CONSTRAINT `fk_detalle_venta`
     FOREIGN KEY (`venta_id`)
     REFERENCES `mydb`.`Venta` (`venta_id`)
@@ -206,17 +206,17 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Reportes` (
   `tipo` ENUM('Queja', 'Reclamo', 'Sugerencia', 'Reporte') NOT NULL,
   `fecha_creacion` DATETIME NULL,
   `descripcion` VARCHAR(200) NOT NULL,
-  `estado` ENUM('Abierto', 'En proceso', 'Resuelto', 'Cerrado') NULL DEFAULT 'Abierto\'',
+  `estado` ENUM('Abierto', 'En proceso', 'Resuelto', 'Cerrado') NULL DEFAULT 'Abierto',
   `cliente_id` INT NULL,
   `producto_id` INT NULL,
   `empleado_id` INT NULL,
   `venta_id` INT NULL,
   `fecha_cierre` DATETIME NULL,
   PRIMARY KEY (`reporte_id`),
-  INDEX `fk_reporte_cliente_idx` (`cliente_id` ASC) VISIBLE,
-  INDEX `fk_reporte_producto_idx` (`producto_id` ASC) VISIBLE,
-  INDEX `fk_reporte_empleado_idx` (`empleado_id` ASC) VISIBLE,
-  INDEX `fk_reporte_venta_idx` (`venta_id` ASC) VISIBLE,
+  INDEX `fk_reporte_cliente_idx` (`cliente_id` ASC),
+  INDEX `fk_reporte_producto_idx` (`producto_id` ASC),
+  INDEX `fk_reporte_empleado_idx` (`empleado_id` ASC),
+  INDEX `fk_reporte_venta_idx` (`venta_id` ASC),
   CONSTRAINT `fk_reporte_cliente`
     FOREIGN KEY (`cliente_id`)
     REFERENCES `mydb`.`Cliente` (`cliente_id`)
