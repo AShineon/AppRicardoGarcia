@@ -197,6 +197,15 @@ CREATE TABLE IF NOT EXISTS `mydb`.`DetalleVenta` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `mydb`.`Configuración`
+-- -----------------------------------------------------
+CREATE TABLE Configuracion (
+    config_id INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(50) UNIQUE NOT NULL,
+    valor VARCHAR(255) NOT NULL,
+    descripcion VARCHAR(255) DEFAULT NULL)
+ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `mydb`.`Reportes`
