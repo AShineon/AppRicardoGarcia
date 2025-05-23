@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`Venta` (
   `empleado_id` INT NOT NULL,
   `fecha_hora` DATETIME NOT NULL,
   `subtotal` DECIMAL(12,2) NOT NULL,
-  `decuento_total` DECIMAL(12,2) NOT NULL DEFAULT '0.00',
+  `descuento_total` DECIMAL(12,2) NOT NULL DEFAULT '0.00',
   `impuesto` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `total` DECIMAL(12,2) NOT NULL,
   `metodo_pago` ENUM('EFECTIVO', 'TARJETA_CREDITO', 'TARJETA_DEBITO', 'TRANSFERENCIA', 'OTRO') NULL,

@@ -6,45 +6,49 @@ if (!isset($_SESSION['usuario'])) {
 }
 require_once "../config/database.php";
 
-// Agregar o actualizar configuración
+// Agregar o actualizar empleado
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $config_id = isset($_POST['config_id']) ? intval($_POST['config_id']) : 0;
-    $clave = $_POST['clave'];
-    $valor = $_POST['valor'];
-    $descripcion = $_POST['descripcion'];
+    $empleado_id = isset($_POST['empleado_id']) ? intval($_POST['empleado_id']) : 0;
+    $nombre = $_POST['nombre'];
+    $apellido = $_POST['apellido'];
+    $puesto = $_POST['puesto'];
+    $usuario = $_POST['usuario'];
+    $contraseña = $_POST['contraseña'];
+    $activo = $_POST['activo'];
 
-    if ($config_id > 0) {
-        // Actualizar
-        $stmt = $conn->prepare("UPDATE Configuracion SET clave = ?, valor = ?, descripcion = ? WHERE config_id = ?");
-        $stmt->bind_param("sssi", $clave, $valor, $descripcion, $config_id);
-        $stmt->execute();
+    if ($empleado_id > 0) {
+        // Actualizar empleado
+        $stmt = $conn->prepare("UPDATE Empleado SET nombre = ?, apellido = ?, puesto = ?, usuario = ?, contraseña = ?, activo = ? WHERE empleado_id = ?");
+        $stmt->bind_param("ssssssi", $nombre, $apellido, $puesto, $usuario, $contraseña, $activo, $empleado_id);
     } else {
-        // Insertar nuevo
-        $stmt = $conn->prepare("INSERT INTO Configuracion (clave, valor, descripcion) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $clave, $valor, $descripcion);
-        $stmt->execute();
+        // Insertar nuevo empleado
+        $stmt = $conn->prepare("INSERT INTO Empleado (nombre, apellido, puesto, usuario, contraseña, activo) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $nombre, $apellido, $puesto, $usuario, $contraseña, $activo);
     }
+    $stmt->execute();
     header("Location: configuracion.php");
     exit();
 }
 
-// Eliminar configuración
+// Eliminar empleado
 if (isset($_GET['eliminar'])) {
     $id = intval($_GET['eliminar']);
-    $conn->query("DELETE FROM Configuracion WHERE config_id = $id");
+    $conn->query("DELETE FROM Empleado WHERE empleado_id = $id");
     header("Location: configuracion.php");
     exit();
 }
 
-// Obtener todas las configuraciones
-$result = $conn->query("SELECT * FROM Configuracion ORDER BY config_id DESC");
+// Obtener todos los empleados
+$result = $conn->query("SELECT * FROM Empleado ORDER BY empleado_id DESC");
 
 // Para editar, si hay id en GET
-$editarConfig = null;
+$editarEmpleado = null;
 if (isset($_GET['editar'])) {
     $idEditar = intval($_GET['editar']);
-    $resEditar = $conn->query("SELECT * FROM Configuracion WHERE config_id = $idEditar");
-    $editarConfig = $resEditar->fetch_assoc();
+    $resEditar = $conn->query("SELECT * FROM Empleado WHERE empleado_id = $idEditar");
+    if ($resEditar && $resEditar->num_rows > 0) {
+        $editarEmpleado = $resEditar->fetch_assoc();
+    }
 }
 ?>
 
@@ -52,7 +56,7 @@ if (isset($_GET['editar'])) {
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Configuración</title>
+  <title>Gestión de Empleados</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -83,7 +87,7 @@ if (isset($_GET['editar'])) {
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       max-width: 600px;
     }
-    input {
+    input, select {
       width: 100%;
       padding: 8px;
       margin-top: 6px;
@@ -104,46 +108,83 @@ if (isset($_GET['editar'])) {
     }
     .acciones a {
       margin-right: 10px;
+      color: #2980b9;
+      text-decoration: none;
+    }
+    .acciones a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h2>Configuración</h2>
+  <h2>Gestión de Empleados</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2>Gestión de Empleados</h2>
+      <a href="panel.php" style="background-color: #3498db; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-weight: bold;">Volver al Panel</a>
+    </div>
 
-  <!-- Tabla de configuraciones -->
+  <!-- Tabla de empleados -->
   <table>
     <tr>
       <th>ID</th>
-      <th>Clave</th>
-      <th>Valor</th>
-      <th>Descripción</th>
+      <th>Nombre</th>
+      <th>Apellido</th>
+      <th>Puesto</th>
+      <th>Usuario</th>
+      <th>Estado</th>
       <th>Acciones</th>
     </tr>
     <?php while($row = $result->fetch_assoc()): ?>
     <tr>
-      <td><?= $row['config_id'] ?></td>
-      <td><?= htmlspecialchars($row['clave']) ?></td>
-      <td><?= htmlspecialchars($row['valor']) ?></td>
-      <td><?= htmlspecialchars($row['descripcion']) ?></td>
+      <td><?= $row['empleado_id'] ?></td>
+      <td><?= htmlspecialchars($row['nombre']) ?></td>
+      <td><?= htmlspecialchars($row['apellido']) ?></td>
+      <td><?= htmlspecialchars($row['puesto']) ?></td>
+      <td><?= htmlspecialchars($row['usuario']) ?></td>
+      <td><?= htmlspecialchars($row['activo']) ?></td>
       <td class="acciones">
-        <a href="configuracion.php?editar=<?= $row['config_id'] ?>">Editar</a>
-        <a href="configuracion.php?eliminar=<?= $row['config_id'] ?>" onclick="return confirm('¿Seguro que quieres eliminar esta configuración?');">Eliminar</a>
+        <a href="configuracion.php?editar=<?= $row['empleado_id'] ?>">Editar</a>
+        <a href="configuracion.php?eliminar=<?= $row['empleado_id'] ?>" onclick="return confirm('¿Seguro que quieres eliminar este empleado?');">Eliminar</a>
       </td>
     </tr>
     <?php endwhile; ?>
   </table>
 
-  <!-- Formulario para agregar o editar configuración -->
+  <!-- Formulario para agregar o editar empleado -->
   <form method="POST">
-    <h3><?= $editarConfig ? "Editar configuración" : "Agregar nueva configuración" ?></h3>
-    <input type="hidden" name="config_id" value="<?= $editarConfig ? $editarConfig['config_id'] : '' ?>">
-    <label>Clave</label>
-    <input type="text" name="clave" required value="<?= $editarConfig ? htmlspecialchars($editarConfig['clave']) : '' ?>" <?= $editarConfig ? 'readonly' : '' ?>>
-    <label>Valor</label>
-    <input type="text" name="valor" required value="<?= $editarConfig ? htmlspecialchars($editarConfig['valor']) : '' ?>">
-    <label>Descripción</label>
-    <input type="text" name="descripcion" value="<?= $editarConfig ? htmlspecialchars($editarConfig['descripcion']) : '' ?>">
-    <button type="submit"><?= $editarConfig ? "Guardar cambios" : "Agregar configuración" ?></button>
+    <h3><?= $editarEmpleado ? "Editar empleado" : "Agregar nuevo empleado" ?></h3>
+    <input type="hidden" name="empleado_id" value="<?= $editarEmpleado ? $editarEmpleado['empleado_id'] : '' ?>">
+    
+    <label>Nombre</label>
+    <input type="text" name="nombre" required value="<?= $editarEmpleado ? htmlspecialchars($editarEmpleado['nombre']) : '' ?>">
+    
+    <label>Apellido</label>
+    <input type="text" name="apellido" required value="<?= $editarEmpleado ? htmlspecialchars($editarEmpleado['apellido']) : '' ?>">
+    
+    <label>Puesto</label>
+    <select name="puesto" required>
+      <option value="Vendedor" <?= ($editarEmpleado && $editarEmpleado['puesto'] == 'Vendedor') ? 'selected' : '' ?>>Vendedor</option>
+      <option value="Supervisor" <?= ($editarEmpleado && $editarEmpleado['puesto'] == 'Supervisor') ? 'selected' : '' ?>>Supervisor</option>
+      <option value="Gerente" <?= ($editarEmpleado && $editarEmpleado['puesto'] == 'Gerente') ? 'selected' : '' ?>>Gerente</option>
+      <option value="Almacenero" <?= ($editarEmpleado && $editarEmpleado['puesto'] == 'Almacenero') ? 'selected' : '' ?>>Almacenero</option>
+      <option value="Administrativo" <?= ($editarEmpleado && $editarEmpleado['puesto'] == 'Administrativo') ? 'selected' : '' ?>>Administrativo</option>
+    </select>
+    
+    <label>Usuario</label>
+    <input type="text" name="usuario" required value="<?= $editarEmpleado ? htmlspecialchars($editarEmpleado['usuario']) : '' ?>">
+    
+    <label>Contraseña</label>
+    <input type="password" name="contraseña" required value="<?= $editarEmpleado ? htmlspecialchars($editarEmpleado['contraseña']) : '' ?>">
+    
+    <label>Estado</label>
+    <select name="activo" required>
+      <option value="Activo" <?= ($editarEmpleado && $editarEmpleado['activo'] == 'Activo') ? 'selected' : '' ?>>Activo</option>
+      <option value="Inactivo" <?= ($editarEmpleado && $editarEmpleado['activo'] == 'Inactivo') ? 'selected' : '' ?>>Inactivo</option>
+      <option value="Suspendido" <?= ($editarEmpleado && $editarEmpleado['activo'] == 'Suspendido') ? 'selected' : '' ?>>Suspendido</option>
+      <option value="Vacaciones" <?= ($editarEmpleado && $editarEmpleado['activo'] == 'Vacaciones') ? 'selected' : '' ?>>Vacaciones</option>
+    </select>
+    
+    <button type="submit"><?= $editarEmpleado ? "Guardar cambios" : "Agregar empleado" ?></button>
   </form>
 </body>
 </html>

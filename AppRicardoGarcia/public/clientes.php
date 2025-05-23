@@ -45,8 +45,26 @@ $result = $conn->query("SELECT * FROM Cliente ORDER BY cliente_id DESC");
       background-color: #f4f6f9;
       padding: 30px;
     }
-    h2 {
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 20px;
+    }
+    h2 {
+      margin-bottom: 0;
+    }
+    .btn-volver {
+      background-color: #3498db;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    .btn-volver:hover {
+      background-color: #2980b9;
     }
     table {
       border-collapse: collapse;
@@ -94,7 +112,11 @@ $result = $conn->query("SELECT * FROM Cliente ORDER BY cliente_id DESC");
   </style>
 </head>
 <body>
-  <h2>Clientes</h2>
+  <!-- Contenedor del encabezado con botón de volver -->
+  <div class="header-container">
+    <h2>Clientes</h2>
+    <a href="panel.php" class="btn-volver">Volver al Panel</a>
+  </div>
 
   <!-- Tabla de clientes -->
   <table>

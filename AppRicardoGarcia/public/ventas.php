@@ -9,26 +9,62 @@ require_once "../config/database.php";
 
 // Insertar venta
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'agregar') {
+    // Recoger datos del formulario
     $cliente_id = $_POST['cliente_id'];
     $empleado_id = $_POST['empleado_id'];
-    $fecha_hora = date('Y-m-d H:i:s');  // Puedes tomar la fecha actual
-    $subtotal = 0.00; // Para simplificar, inicializamos en 0
-    $descuento_total = 0.00;
-    $impuesto = 0.00;
-    $total = 0.00;
+    $fecha_hora = date('Y-m-d H:i:s', strtotime($_POST['fecha_hora']));
+    $subtotal = floatval($_POST['subtotal']);
+    $decuento_total = floatval($_POST['descuento_total']); // Nota: variable con "s" del formulario
+    $impuesto = floatval($_POST['impuesto']);
+    $total = floatval($_POST['total']);
     $metodo_pago = $_POST['metodo_pago'];
     $estado = $_POST['estado'];
 
-    $stmt = $conn->prepare("INSERT INTO Venta (venta_id, cliente_id, empleado_id, fecha_hora, subtotal, decuento_total, impuesto, total, metodo_pago, estado) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("iissddds", $cliente_id, $empleado_id, $fecha_hora, $subtotal, $descuento_total, $impuesto, $total, $metodo_pago, $estado);
-    // Ojo: el bind_param debe coincidir con los tipos: i = int, s = string, d = double/float
-    // Pero aquí hay mezcla, arreglamos abajo.
+    // Consulta SQL con el nombre EXACTO de la columna (decuento_total sin "s")
+    $sql = "INSERT INTO Venta (
+                venta_id, 
+                cliente_id, 
+                empleado_id, 
+                fecha_hora, 
+                subtotal, 
+                decuento_total,
+                impuesto, 
+                total, 
+                metodo_pago, 
+                estado
+            ) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    // Debug: Ver consulta SQL completa
+    error_log("SQL a ejecutar: " . $sql);
+    
+    $stmt = $conn->prepare($sql);
+    
+    if ($stmt === false) {
+        die("Error al preparar la consulta: " . $conn->error . "<br>SQL: " . htmlspecialchars($sql));
+    }
 
-    // CORRECCIÓN de tipos para bind_param (cliente_id int, empleado_id int, fecha_hora string, subtotal double, descuento double, impuesto double, total double, metodo_pago string, estado string)
-    $stmt = $conn->prepare("INSERT INTO Venta (venta_id, cliente_id, empleado_id, fecha_hora, subtotal, decuento_total, impuesto, total, metodo_pago, estado) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("iisddddsss", $cliente_id, $empleado_id, $fecha_hora, $subtotal, $descuento_total, $impuesto, $total, $metodo_pago, $estado);
+    // Vinculación de parámetros
+    $bind_result = $stmt->bind_param(
+        "iisddddss", 
+        $cliente_id, 
+        $empleado_id, 
+        $fecha_hora, 
+        $subtotal, 
+        $decuento_total, // Variable con nombre diferente
+        $impuesto, 
+        $total, 
+        $metodo_pago, 
+        $estado
+    );
+    
+    if ($bind_result === false) {
+        die("Error al vincular parámetros: " . $stmt->error);
+    }
 
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        die("Error al ejecutar la consulta: " . $stmt->error);
+    }
+
     header("Location: ventas.php");
     exit();
 }
@@ -63,13 +99,31 @@ $empleados = $conn->query("SELECT empleado_id, nombre, apellido FROM Empleado OR
   <meta charset="UTF-8">
   <title>Ventas</title>
   <style>
-    body {
+     body {
       font-family: Arial, sans-serif;
       background-color: #f4f6f9;
       padding: 30px;
     }
-    h2 {
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 20px;
+    }
+    h2 {
+      margin-bottom: 0;
+    }
+    .btn-volver {
+      background-color: #3498db;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    .btn-volver:hover {
+      background-color: #2980b9;
     }
     table {
       border-collapse: collapse;
@@ -114,10 +168,32 @@ $empleados = $conn->query("SELECT empleado_id, nombre, apellido FROM Empleado OR
     .acciones a {
       margin-right: 10px;
     }
+    .form-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  flex: 1;
+}
+
+input[type="number"], 
+input[type="datetime-local"] {
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
   </style>
 </head>
 <body>
-  <h2>Ventas</h2>
+    <div class="header-container">
+      <h2>Ventas</h2>
+      <a href="panel.php" class="btn-volver">Volver al Panel</a>
+    </div>
 
   <!-- Tabla de ventas -->
   <table>
@@ -155,44 +231,86 @@ $empleados = $conn->query("SELECT empleado_id, nombre, apellido FROM Empleado OR
   </table>
 
   <!-- Formulario para agregar venta -->
-  <form method="POST">
-    <h3>Agregar nueva venta</h3>
-    <input type="hidden" name="accion" value="agregar">
+<!-- Formulario para agregar venta -->
+<form method="POST">
+  <h3>Agregar nueva venta</h3>
+  <input type="hidden" name="accion" value="agregar">
+  
+  <div class="form-row">
+    <div class="form-group">
+      <label>Cliente</label>
+      <select name="cliente_id" required>
+        <option value="">Seleccione un cliente</option>
+        <?php while($c = $clientes->fetch_assoc()): ?>
+          <option value="<?= $c['cliente_id'] ?>"><?= htmlspecialchars($c['nombre'] . " " . $c['apellido']) ?></option>
+        <?php endwhile; ?>
+      </select>
+    </div>
     
-    <label>Cliente</label>
-    <select name="cliente_id" required>
-      <option value="">Seleccione un cliente</option>
-      <?php while($c = $clientes->fetch_assoc()): ?>
-        <option value="<?= $c['cliente_id'] ?>"><?= htmlspecialchars($c['nombre'] . " " . $c['apellido']) ?></option>
-      <?php endwhile; ?>
-    </select>
-    
-    <label>Empleado</label>
-    <select name="empleado_id" required>
-      <option value="">Seleccione un empleado</option>
-      <?php while($e = $empleados->fetch_assoc()): ?>
-        <option value="<?= $e['empleado_id'] ?>"><?= htmlspecialchars($e['nombre'] . " " . $e['apellido']) ?></option>
-      <?php endwhile; ?>
-    </select>
-    
-    <label>Método de pago</label>
-    <select name="metodo_pago" required>
-      <option value="EFECTIVO">EFECTIVO</option>
-      <option value="TARJETA_CREDITO">TARJETA CRÉDITO</option>
-      <option value="TARJETA_DEBITO">TARJETA DÉBITO</option>
-      <option value="TRANSFERENCIA">TRANSFERENCIA</option>
-      <option value="OTRO">OTRO</option>
-    </select>
-    
-    <label>Estado</label>
-    <select name="estado" required>
-      <option value="COMPLETADA">COMPLETADA</option>
-      <option value="CANCELADA">CANCELADA</option>
-      <option value="DEVOLUCION">DEVOLUCIÓN</option>
-      <option value="PENDIENTE">PENDIENTE</option>
-    </select>
+    <div class="form-group">
+      <label>Empleado</label>
+      <select name="empleado_id" required>
+        <option value="">Seleccione un empleado</option>
+        <?php while($e = $empleados->fetch_assoc()): ?>
+          <option value="<?= $e['empleado_id'] ?>"><?= htmlspecialchars($e['nombre'] . " " . $e['apellido']) ?></option>
+        <?php endwhile; ?>
+      </select>
+    </div>
+  </div>
 
-    <button type="submit">Agregar Venta</button>
-  </form>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Fecha y Hora</label>
+      <input type="datetime-local" name="fecha_hora" value="<?= date('Y-m-d\TH:i') ?>" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Método de pago</label>
+      <select name="metodo_pago" required>
+        <option value="EFECTIVO">EFECTIVO</option>
+        <option value="TARJETA_CREDITO">TARJETA CRÉDITO</option>
+        <option value="TARJETA_DEBITO">TARJETA DÉBITO</option>
+        <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Subtotal</label>
+      <input type="number" name="subtotal" step="0.01" min="0" value="0.00" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Descuento Total</label>
+      <input type="number" name="descuento_total" step="0.01" min="0" value="0.00" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Impuesto</label>
+      <input type="number" name="impuesto" step="0.01" min="0" value="0.00" required>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Total</label>
+      <input type="number" name="total" step="0.01" min="0" value="0.00" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Estado</label>
+      <select name="estado" required>
+        <option value="COMPLETADA">COMPLETADA</option>
+        <option value="CANCELADA">CANCELADA</option>
+        <option value="DEVOLUCION">DEVOLUCIÓN</option>
+        <option value="PENDIENTE">PENDIENTE</option>
+      </select>
+    </div>
+  </div>
+
+  <button type="submit">Agregar Venta</button>
+</form>
 </body>
 </html>

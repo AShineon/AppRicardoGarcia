@@ -80,15 +80,15 @@ if (!isset($_SESSION['usuario'])) {
 <body>
 
   <div class="navbar">
-    <h2>Sistema de Gestión</h2>
+    <h2>Mis Trapitos</h2>
     <div class="nav-links">
-      <a href="#">Ventas</a>
-      <a href="#">Proveedores</a>
+      <a href="ventas.php">Ventas</a>
+      <a href="proveedores.php">Proveedores</a>
       <a href="clientes.php">Clientes</a>
-      <a href="#">Inventario</a>
+      <a href="../../inventario/index.php">Inventario</a>
       <a href="#">Descuentos y Promociones</a>
       <a href="#">Consultas y Reportes</a>
-      <a href="#">Configuración</a>
+      <a href="configuracion.php">Configuración</a>
     </div>
     <form action="logout.php" method="POST" style="margin-left: 20px;">
       <button type="submit" class="logout-btn">Cerrar sesión</button>

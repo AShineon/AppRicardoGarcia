@@ -13,19 +13,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $direccion = $_POST['direccion'];
     $email = $_POST['email'];
     $telefono = $_POST['telefono'];
-    $fecha = date('Y-m-d H:i:s');
+    // Eliminamos $fecha ya que no existe en la tabla
+    $contacto = isset($_POST['contacto']) ? $_POST['contacto'] : null;
+    $ruc = isset($_POST['ruc']) ? $_POST['ruc'] : null;
 
-    $stmt = $conn->prepare("INSERT INTO Proveedor (proveedor_id, nombre, direccion, email, telefono, fecha_registro) VALUES (NULL, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssss", $nombre, $direccion, $email, $telefono, $fecha);
-    $stmt->execute();
-    header("Location: proveedores.php");
-    exit();
-}
+    // Consulta SQL actualizada según estructura real
+    $sql = "INSERT INTO Proveedor (
+                proveedor_id, 
+                nombre, 
+                direccion, 
+                email, 
+                telefono, 
+                contacto,  
+                ruc        
+            ) VALUES (NULL, ?, ?, ?, ?, ?, ?)";
+    
+    $stmt = $conn->prepare($sql);
+    
+    if ($stmt === false) {
+        die("Error al preparar la consulta: " . $conn->error . "<br>SQL: " . htmlspecialchars($sql));
+    }
 
-// Eliminar proveedor
-if (isset($_GET['eliminar'])) {
-    $id = $_GET['eliminar'];
-    $conn->query("DELETE FROM Proveedor WHERE proveedor_id = $id");
+    // Vincular parámetros (5s para strings + 1s para contacto + 1s para ruc)
+    $bind_result = $stmt->bind_param("ssssss", 
+        $nombre, 
+        $direccion, 
+        $email, 
+        $telefono,
+        $contacto,
+        $ruc
+    );
+    
+    if ($bind_result === false) {
+        die("Error al vincular parámetros: " . $stmt->error);
+    }
+
+    if (!$stmt->execute()) {
+        die("Error al ejecutar la consulta: " . $stmt->error);
+    }
+
     header("Location: proveedores.php");
     exit();
 }
@@ -40,13 +66,31 @@ $result = $conn->query("SELECT * FROM Proveedor ORDER BY proveedor_id DESC");
   <meta charset="UTF-8">
   <title>Proveedores</title>
   <style>
-    body {
+ body {
       font-family: Arial, sans-serif;
       background-color: #f4f6f9;
       padding: 30px;
     }
-    h2 {
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 20px;
+    }
+    h2 {
+      margin-bottom: 0;
+    }
+    .btn-volver {
+      background-color: #3498db;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    .btn-volver:hover {
+      background-color: #2980b9;
     }
     table {
       border-collapse: collapse;
@@ -94,7 +138,10 @@ $result = $conn->query("SELECT * FROM Proveedor ORDER BY proveedor_id DESC");
   </style>
 </head>
 <body>
-  <h2>Proveedores</h2>
+  <div class="header-container">
+    <h2>Proveedores</h2>
+    <a href="panel.php" class="btn-volver">Volver al Panel</a>
+  </div>
 
   <!-- Tabla de proveedores -->
   <table>
@@ -121,24 +168,31 @@ $result = $conn->query("SELECT * FROM Proveedor ORDER BY proveedor_id DESC");
     <?php endwhile; ?>
   </table>
 
-  <!-- Formulario para agregar proveedor -->
-  <form method="POST">
-    <h3>Agregar nuevo proveedor</h3>
-    <input type="hidden" name="accion" value="agregar">
-    
-    <label>Nombre</label>
-    <input type="text" name="nombre" required>
-    
-    <label>Dirección</label>
-    <input type="text" name="direccion" required>
-    
-    <label>Email</label>
-    <input type="email" name="email" required>
-    
-    <label>Teléfono</label>
-    <input type="text" name="telefono" required>
-    
-    <button type="submit">Agregar Proveedor</button>
-  </form>
+<!-- Formulario para agregar proveedor -->
+<form method="POST">
+  <h3>Agregar nuevo proveedor</h3>
+  <input type="hidden" name="accion" value="agregar">
+  
+  <label>Nombre</label>
+  <input type="text" name="nombre" required>
+  
+  <label>Dirección</label>
+  <input type="text" name="direccion" required>
+  
+  <label>Email</label>
+  <input type="email" name="email" required>
+  
+  <label>Teléfono</label>
+  <input type="text" name="telefono" required>
+  
+  <!-- Nuevos campos -->
+  <label>Persona de Contacto (Opcional)</label>
+  <input type="text" name="contacto">
+  
+  <label>RUC (Opcional)</label>
+  <input type="text" name="ruc">
+  
+  <button type="submit">Agregar Proveedor</button>
+</form>
 </body>
 </html>
