@@ -86,8 +86,8 @@ if (!isset($_SESSION['usuario'])) {
       <a href="proveedores.php">Proveedores</a>
       <a href="clientes.php">Clientes</a>
       <a href="../../inventario/index.php">Inventario</a>
-      <a href="#">Descuentos y Promociones</a>
-      <a href="#">Consultas y Reportes</a>
+      <a href="ofertas_descuentos.php">Descuentos y Promociones</a>
+      <a href="consultas_reportes.php">Consultas y Reportes</a>
       <a href="configuracion.php">Configuración</a>
     </div>
     <form action="logout.php" method="POST" style="margin-left: 20px;">
