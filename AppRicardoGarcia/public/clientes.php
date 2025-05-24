@@ -7,6 +7,7 @@ if (!isset($_SESSION['usuario'])) {
 require_once "../config/database.php";
 
 // Insertar cliente
+// Insertar cliente
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'agregar') {
     $nombre = $_POST['nombre'];
     $apellido = $_POST['apellido'];
@@ -15,18 +16,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $telefono = $_POST['telefono'];
     $fecha = date('Y-m-d H:i:s');
 
-    $stmt = $conn->prepare("INSERT INTO Cliente (cliente_id, nombre, apellido, direccion, email, telefono, fecha_registro) VALUES (NULL, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssss", $nombre, $apellido, $direccion, $email, $telefono, $fecha);
-    $stmt->execute();
-    header("Location: clientes.php");
-    exit();
+    // Verificar conexión
+    if ($conn->connect_error) {
+        die("Error de conexión: " . $conn->connect_error);
+    }
+
+    // Consulta SQL para insertar cliente
+    $sql = "INSERT INTO Cliente (nombre, apellido, direccion, email, telefono, fecha_registro) VALUES (?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    
+    if ($stmt === false) {
+        die("Error al preparar la consulta: " . $conn->error);
+    }
+
+    // Vincular parámetros
+    $bind_result = $stmt->bind_param("ssssss", $nombre, $apellido, $direccion, $email, $telefono, $fecha);
+    
+    if ($bind_result === false) {
+        die("Error al vincular parámetros: " . $stmt->error);
+    }
+
+    // Ejecutar consulta
+    if ($stmt->execute()) {
+        header("Location: clientes.php?exito=1");
+        exit();
+    } else {
+        // Mostrar error detallado
+        die("Error al ejecutar la consulta: " . $stmt->error);
+    }
 }
 
-// Eliminar cliente
+// Eliminar cliente (antes de la consulta SELECT)
 if (isset($_GET['eliminar'])) {
-    $id = $_GET['eliminar'];
-    $conn->query("DELETE FROM Cliente WHERE cliente_id = $id");
-    header("Location: clientes.php");
+    $id = intval($_GET['eliminar']);
+    
+    // Verificar si el cliente tiene ventas asociadas
+    $check = $conn->query("SELECT COUNT(*) AS total FROM Venta WHERE cliente_id = $id");
+    $row = $check->fetch_assoc();
+    
+    if ($row['total'] > 0) {
+        header("Location: clientes.php?error=No se puede eliminar, el cliente tiene ventas asociadas");
+        exit();
+    }
+    
+    // Si no tiene ventas, proceder a eliminar
+    $stmt = $conn->prepare("DELETE FROM Cliente WHERE cliente_id = ?");
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute()) {
+        header("Location: clientes.php?exito=Cliente eliminado correctamente");
+    } else {
+        header("Location: clientes.php?error=Error al eliminar cliente");
+    }
     exit();
 }
 
